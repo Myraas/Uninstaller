@@ -1,47 +1,48 @@
-Clear-Host
-
-#Check if C:\temp Exists and Create DIR
-if (!(Test-Path -Path C:\temp)){mkdir C:\temp}
-
-Start-Transcript -Path "C:\temp\Uninstaller-Transcript.txt"
-[System.DateTime]::Now
-
 # List Apps to uninstall here.
-
 $apps = @(
     "*Adobe*"
 )
 
-# List Apps to whitelist here.
-
+# List Apps to prevent uninstallation here.
 $whitelist = @(
-    "*PhotoShop*"
-    "*Illustrator*"
-    "*Creative*"
-    "*Lightroom*"
-    "*Premiere*"
-    "*Effects*"
-    "*Substance*"
-    "*Stock*"
-    "*Express*"
-    "*Dreamweaver*"
-    "*Stager*"
-    "*Sampler*"
-    "*Painter*"
-    "*Designer*"
-    "*InCopy*"
-    "*Rush*"
-    "*Aero*"
-    "*Express*"
-    "*PhotoShop*"
-    "*Audition*"
-)
+    "PhotoShop"
+    "Illustrator"
+    "Creative"
+    "Lightroom"
+    "Premiere"
+    "Effects"
+    "Substance"
+    "Stock"
+    "Express"
+    "Dreamweaver"
+    "Stager"
+    "Sampler"
+    "Painter"
+    "Designer"
+    "InCopy"
+    "Rush"
+    "Aero"
+    "Express"
+    "Audition"
+) -Join "|"
 
+# - DO NOT EDIT BELOW THIS LINE - 
 # --------------------------------------------------------------------------------------
 
-# Log actions in the %temp% directory
+Clear-Host
+
+Start-Transcript -Path "C:\temp\Uninstaller-Transcript.txt"
+[System.DateTime]::Now
+
+#Check if C:\temp Exists and Create Directory
+if (!(Test-Path -Path C:\temp)){mkdir C:\temp}
+
+# Log actions in the C:\temp directory
 $Timestamp = Get-Date -Format "yyyy-MM-dd_THHmmss"
 $LogFile = "C:\temp\Uninstaller-MsiexecLog_$Timestamp.log"
+
+# Whitelist Regex
+$whitelistRegex=[Regex]::New($whitelist,[System.Text.RegularExpressions.RegexOptions]::IgnoreCase)
 
 function Get-InstalledApps{
     if ([IntPtr]::Size -eq 4) {
@@ -66,39 +67,32 @@ $MSIUninstallArguments = @(
     "$LogFile"
 )
 
-Get-Process * | Where-Object {$_.CompanyName -like $app -or $_.Path -like $app} | Stop-Process
+ Get-Process * | Where-Object {$_.CompanyName -like $app -or $_.Path -like $app} | Stop-Process
 
 foreach ($app in $apps){
-    $results = ( Get-InstalledApps | Where { $_.DisplayName -like $app } ) | Sort-Object
-
-
-    # Filter whitelisted apps out
-    
-#    $results = $results | Where-Object { $_ -notin $whitelist }
-#    $results = ($results | Where-Object {$_ -notin $whitelist}) | Sort-Object
-#    $results = $results | where-object -property "$whitelist" -notin $_.DisplayName
-
+    $results = ( Get-InstalledApps | Where-Object { ($_.DisplayName -like $app) -and ($_.DisplayName -notmatch $whitelistRegex) } ) | Sort-Object
 
     foreach($result in $results){
         Write-Host $result `
         
-#        Start-Process "C:\Windows\System32\Msiexec.exe" -ArgumentList $MSIUninstallArguments -Wait -NoNewWindow
-#        Get-WmiObject -Class Win32_Product | Where-Object {$_.Name -like $app } | foreach-object -process {$_.Uninstall()}
+       Start-Process "C:\Windows\System32\Msiexec.exe" -ArgumentList $MSIUninstallArguments -Wait -NoNewWindow
+       Get-WmiObject -Class Win32_Product | Where-Object { ($_.Name -like $app) -and ($_.Name -notmatch $whitelistRegex) } | foreach-object -process {$_.Uninstall()}
     }
 }
 
-#Check if Previous Adobe Installers Exist in C:\temp and Delete
+# Check if Previous Adobe Installers Exist in C:\temp and Delete
 if ((Test-Path -Path C:\temp\Adobe.zip)){Remove-Item C:\temp\Adobe.zip}
 if ((Test-Path -Path C:\temp\AdobeAcrobatReader.exe)){Remove-Item C:\temp\AdobeAcrobatReader.exe}
 
 # Download Adobe Acrobat to C:\temp
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-$sourceURL = "https://urlofinstallerhere"
+$sourceURL = "------URL TO ZIP INSTALLER HERE------"
 Invoke-WebRequest -Uri $sourceURL -OutFile "C:\temp\Adobe.zip"
 
+# Throw Error if download fails
 if ((Get-Item -Path C:\temp\Adobe.zip).length/1KB -le 114){Write-Host "Error Downloading File." -ForegroundColor Red}
 
-# Expand Archive
+# Unzip Archive
 Expand-Archive "C:\temp\Adobe.zip" -DestinationPath "C:\temp"
 
 # Silent Install Adobe Acrobat EXE
