@@ -36,7 +36,6 @@ Start-Transcript -Path "C:\temp\Uninstaller-Transcript.txt"
 
 #Check if C:\temp Exists and Create Directory
 if (!(Test-Path -Path C:\temp)){mkdir C:\temp}
-if (!(Test-Path -Path C:\temp\adobe)){mkdir C:\temp\adobe}
 
 # Log actions in the C:\temp directory
 $Timestamp = Get-Date -Format "yyyy-MM-dd_THHmmss"
@@ -84,8 +83,8 @@ foreach ($app in $apps){
 }
 
 # Check if Previous Adobe Installers Exist in C:\temp and Delete
-if ((Test-Path -Path "C:\temp\adobe")){Remove-Item -LiteralPath "C:\temp\adobe" -Force -Recurse}
-if (!(Test-Path -Path "C:\temp\adobe")){mkdir "C:\temp\adobe"}
+if (!(Test-Path -Path "C:\temp\adobe")){New-Item -Path "C:\temp\adobe" -ItemType Directory}
+if ((Test-Path -Path "C:\temp\adobe")){Remove-Item -Force -Recurse -Path "C:\temp\adobe\*"}
 
 # Download Adobe Acrobat to C:\temp\adobe
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
