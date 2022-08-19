@@ -35,7 +35,7 @@ Start-Transcript -Path "C:\temp\Uninstaller-Transcript.txt"
 [System.DateTime]::Now
 
 #Check if C:\temp Exists and Create Directory
-if (!(Test-Path -Path C:\temp)){mkdir C:\temp}
+if (!(Test-Path -Path C:\temp)){New-Item -Path "C:\temp" -ItemType Directory}
 
 # Log actions in the C:\temp directory
 $Timestamp = Get-Date -Format "yyyy-MM-dd_THHmmss"
