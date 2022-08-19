@@ -36,6 +36,7 @@ Start-Transcript -Path "C:\temp\Uninstaller-Transcript.txt"
 
 #Check if C:\temp Exists and Create Directory
 if (!(Test-Path -Path C:\temp)){mkdir C:\temp}
+if (!(Test-Path -Path C:\temp\adobe)){mkdir C:\temp\adobe}
 
 # Log actions in the C:\temp directory
 $Timestamp = Get-Date -Format "yyyy-MM-dd_THHmmss"
@@ -57,6 +58,7 @@ function Get-InstalledApps{
     Get-ItemProperty $regpath | .{process{if($_.DisplayName -and $_.UninstallString) { $_ } }}
 }
 
+
 $MSIUninstallArguments = @(
     "/X"
     "$($result.PSChildName)"
@@ -67,7 +69,8 @@ $MSIUninstallArguments = @(
     "$LogFile"
 )
 
- Get-Process * | Where-Object {$_.CompanyName -like $app -or $_.Path -like $app} | Stop-Process
+
+Get-Process * | Where-Object {$_.CompanyName -like $app -or $_.Path -like $app} | Stop-Process
 
 foreach ($app in $apps){
     $results = ( Get-InstalledApps | Where-Object { ($_.DisplayName -like $app) -and ($_.DisplayName -notmatch $whitelistRegex) } ) | Sort-Object
@@ -81,23 +84,23 @@ foreach ($app in $apps){
 }
 
 # Check if Previous Adobe Installers Exist in C:\temp and Delete
-if ((Test-Path -Path C:\temp\Adobe.zip)){Remove-Item C:\temp\Adobe.zip}
-if ((Test-Path -Path C:\temp\AdobeAcrobatReader.exe)){Remove-Item C:\temp\AdobeAcrobatReader.exe}
+if ((Test-Path -Path "C:\temp\adobe")){Remove-Item -LiteralPath "C:\temp\adobe" -Force -Recurse}
+if (!(Test-Path -Path "C:\temp\adobe")){mkdir "C:\temp\adobe"}
 
-# Download Adobe Acrobat to C:\temp
+# Download Adobe Acrobat to C:\temp\adobe
 [Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-$sourceURL = "------URL TO ZIP INSTALLER HERE------"
-Invoke-WebRequest -Uri $sourceURL -OutFile "C:\temp\Adobe.zip"
-
-# Throw Error if download fails
-if ((Get-Item -Path C:\temp\Adobe.zip).length/1KB -le 114){Write-Host "Error Downloading File." -ForegroundColor Red}
+$sourceURL = "https://ardownload2.adobe.com/pub/adobe/reader/win/AcrobatDC/2200220191/AcroRdrDC2200220191_en_US.exe"
+$sourceURL2 = "https://trials.adobe.com/AdobeProducts/APRO/Acrobat_HelpX/win32/Acrobat_DC_Web_WWMUI.zip"
+Invoke-WebRequest -Uri $sourceURL -OutFile "C:\temp\adobe\AcroRdrDC2200220191_en_US.exe"
+Invoke-WebRequest -Uri $sourceURL2 -OutFile "C:\temp\adobe\AdobePro.zip"
 
 # Unzip Archive
-Expand-Archive "C:\temp\Adobe.zip" -DestinationPath "C:\temp"
+Expand-Archive "C:\temp\adobe\AdobePro.zip" -DestinationPath "C:\temp\adobe" -Force
 
-# Silent Install Adobe Acrobat EXE
-C:\temp\AdobeAcrobatReader.exe /sAll /rs /msi EULA_ACCEPT=YES
+# Silent Install Adobe Acrobat Reader EXE
+Start-Process -FilePath "C:\temp\adobe\AcroRdrDC2200220191_en_US.exe" -ArgumentList "/sAll /rs /msi EULA_ACCEPT=YES" -Wait -NoNewWindow
 
-Write-Host ""
+# Silent Install Adobe Acrobat Pro EXE
+Start-Process -FilePath "C:\temp\adobe\Adobe Acrobat\setup.exe" -ArgumentList "/sAll /rs /msi EULA_ACCEPT=YES" -Wait -NoNewWindow
 
 Stop-Transcript
