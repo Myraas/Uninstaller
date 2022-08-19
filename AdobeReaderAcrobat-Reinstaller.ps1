@@ -75,10 +75,10 @@ foreach ($app in $apps){
     $results = ( Get-InstalledApps | Where-Object { ($_.DisplayName -like $app) -and ($_.DisplayName -notmatch $whitelistRegex) } ) | Sort-Object
 
     foreach($result in $results){
-       Write-Host $result `
+        Write-Host $result `
         
-       Start-Process "C:\Windows\System32\Msiexec.exe" -ArgumentList $MSIUninstallArguments -Wait -NoNewWindow
-       Get-WmiObject -Class Win32_Product | Where-Object { ($_.Name -like $app) -and ($_.Name -notmatch $whitelistRegex) } | foreach-object -process {$_.Uninstall()}
+        Start-Process "C:\Windows\System32\Msiexec.exe" -ArgumentList $MSIUninstallArguments -Wait -NoNewWindow
+        Get-WmiObject -Class Win32_Product | Where-Object { ($_.Name -like $app) -and ($_.Name -notmatch $whitelistRegex) } | foreach-object -process {$_.Uninstall()}
     }
 }
 
