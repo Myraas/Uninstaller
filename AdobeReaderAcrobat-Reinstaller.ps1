@@ -69,11 +69,11 @@ $MSIUninstallArguments = @(
 )
 
 
-Get-Process * | Where-Object {$_.CompanyName -like $app -or $_.Path -like $app} | Stop-Process
-
 foreach ($app in $apps){
+    Get-Process * | Where-Object {$_.CompanyName -like $app -or $_.Path -like $app} | Stop-Process
+    
     $results = ( Get-InstalledApps | Where-Object { ($_.DisplayName -like $app) -and ($_.DisplayName -notmatch $whitelistRegex) } ) | Sort-Object
-
+    
     foreach($result in $results){
         Write-Host $result `
         
